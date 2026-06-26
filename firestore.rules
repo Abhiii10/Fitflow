@@ -1,0 +1,162 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedInAs(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
+    function ownerFieldsMatch(userId) {
+      return (
+        (!request.resource.data.keys().hasAny(['userId']) || request.resource.data.userId == userId) &&
+        (!request.resource.data.keys().hasAny(['ownerId']) || request.resource.data.ownerId == userId)
+      );
+    }
+
+    function commonAppWrite(userId) {
+      return signedInAs(userId)
+        && ownerFieldsMatch(userId)
+        && (!request.resource.data.keys().hasAny(['createdAt'])  || request.resource.data.createdAt  is number)
+        && (!request.resource.data.keys().hasAny(['updatedAt'])  || request.resource.data.updatedAt  is number)
+        && (!request.resource.data.keys().hasAny(['deletedAt'])  || request.resource.data.deletedAt  is number)
+        && (!request.resource.data.keys().hasAny(['pendingSync']) || request.resource.data.pendingSync is bool)
+        && (!request.resource.data.keys().hasAny(['syncStatus']) || request.resource.data.syncStatus in ['pending', 'synced', 'error']);
+    }
+
+    function validProfile(userId) {
+      return commonAppWrite(userId)
+        && (!request.resource.data.keys().hasAny(['waterGoalMl'])      || request.resource.data.waterGoalMl      is number)
+        && (!request.resource.data.keys().hasAny(['proteinGoalMinG'])   || request.resource.data.proteinGoalMinG  is number)
+        && (!request.resource.data.keys().hasAny(['proteinGoalMaxG'])   || request.resource.data.proteinGoalMaxG  is number)
+        && (!request.resource.data.keys().hasAny(['stepsGoalMin'])      || request.resource.data.stepsGoalMin     is number)
+        && (!request.resource.data.keys().hasAny(['stepsGoalMax'])      || request.resource.data.stepsGoalMax     is number)
+        && (!request.resource.data.keys().hasAny(['sleepGoalMinH'])     || request.resource.data.sleepGoalMinH    is number)
+        && (!request.resource.data.keys().hasAny(['sleepGoalMaxH'])     || request.resource.data.sleepGoalMaxH    is number)
+        && (!request.resource.data.keys().hasAny(['calorieTarget'])     || request.resource.data.calorieTarget    is number)
+        && (!request.resource.data.keys().hasAny(['workoutDaysPerWeek'])|| request.resource.data.workoutDaysPerWeek is number)
+        && (!request.resource.data.keys().hasAny(['currentWeightKg'])   || request.resource.data.currentWeightKg is number)
+        && (!request.resource.data.keys().hasAny(['targetWeightKg'])    || request.resource.data.targetWeightKg  is number)
+        && (!request.resource.data.keys().hasAny(['heightCm'])          || request.resource.data.heightCm        is number);
+    }
+
+    match /users/{userId} {
+      allow read: if signedInAs(userId);
+      allow create, update: if commonAppWrite(userId);
+      allow delete: if false;
+
+      match /profile/{profileId} {
+        allow read: if signedInAs(userId);
+        allow create, update: if profileId == 'main' && validProfile(userId);
+        allow delete: if false;
+      }
+
+      match /waterLogs/{docId} {
+        allow read: if signedInAs(userId);
+        allow create, update: if commonAppWrite(userId);
+        allow delete: if false;
+      }
+
+      match /proteinLogs/{docId} {
+        allow read: if signedInAs(userId);
+        allow create, update: if commonAppWrite(userId);
+        allow delete: if false;
+      }
+
+      match /macroLogs/{docId} {
+        allow read: if signedInAs(userId);
+        allow create, update: if commonAppWrite(userId)
+          && (!request.resource.data.keys().hasAny(['calories'])  || request.resource.data.calories  is number)
+          && (!request.resource.data.keys().hasAny(['proteinG'])  || request.resource.data.proteinG  is number)
+          && (!request.resource.data.keys().hasAny(['carbsG'])    || request.resource.data.carbsG    is number)
+          && (!request.resource.data.keys().hasAny(['fatG'])      || request.resource.data.fatG      is number);
+        allow delete: if false;
+      }
+
+      match /stepLogs/{docId} {
+        allow read: if signedInAs(userId);
+        allow create, update: if commonAppWrite(userId)
+          && (!request.resource.data.keys().hasAny(['steps']) || request.resource.data.steps is number);
+        allow delete: if false;
+      }
+
+      match /cardioLogs/{docId} {
+        allow read: if signedInAs(userId);
+        allow create, update: if commonAppWrite(userId);
+        allow delete: if false;
+      }
+
+      match /sleepLogs/{docId} {
+        allow read: if signedInAs(userId);
+        allow create, update: if commonAppWrite(userId)
+          && (!request.resource.data.keys().hasAny(['hoursSlept']) || request.resource.data.hoursSlept is number);
+        allow delete: if false;
+      }
+
+      match /weightLogs/{docId} {
+        allow read: if signedInAs(userId);
+        allow create, update: if commonAppWrite(userId)
+          && (!request.resource.data.keys().hasAny(['weightKg']) || request.resource.data.weightKg is number)
+          && !request.resource.data.keys().hasAny(['dataUrl']);  // photos never go here
+        allow delete: if false;
+      }
+
+      // Progress photo METADATA only — dataUrl is never stored in Firestore
+      match /photoLogs/{docId} {
+        allow read: if signedInAs(userId);
+        allow create, update: if commonAppWrite(userId)
+          && !request.resource.data.keys().hasAny(['dataUrl']);  // enforce: no blob
+        allow delete: if false;
+      }
+
+      match /workoutPlans/{docId} {
+        allow read: if signedInAs(userId);
+        allow create, update: if commonAppWrite(userId)
+          && (!request.resource.data.keys().hasAny(['name']) || request.resource.data.name is string);
+        allow delete: if false;
+      }
+
+      match /exercises/{docId} {
+        allow read: if signedInAs(userId);
+        allow create, update: if commonAppWrite(userId);
+        allow delete: if false;
+      }
+
+      match /workoutSessions/{docId} {
+        allow read: if signedInAs(userId);
+        allow create, update: if commonAppWrite(userId);
+        allow delete: if false;
+      }
+
+      match /sessionExerciseLogs/{docId} {
+        allow read: if signedInAs(userId);
+        allow create, update: if commonAppWrite(userId);
+        allow delete: if false;
+      }
+
+      match /weeklyCheckIns/{docId} {
+        allow read: if signedInAs(userId);
+        allow create, update: if commonAppWrite(userId);
+        allow delete: if false;
+      }
+
+      match /routineItems/{docId} {
+        allow read: if signedInAs(userId);
+        allow create, update: if commonAppWrite(userId)
+          && (!request.resource.data.keys().hasAny(['title']) || request.resource.data.title is string);
+        allow delete: if false;
+      }
+
+      match /aiGeneratedDrafts/{docId} {
+        allow read: if signedInAs(userId);
+        allow create, update: if commonAppWrite(userId);
+        allow delete: if false;
+      }
+    }
+
+    // Deny everything else
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

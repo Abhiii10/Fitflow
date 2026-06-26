@@ -1,0 +1,101 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-text-size-adjust: 100%;
+    width: 100%;
+    overflow-x: hidden;
+  }
+
+  body {
+    @apply bg-cyber-black text-cyber-text;
+    font-family: 'Inter', system-ui, sans-serif;
+    overscroll-behavior: none;
+    width: 100%;
+    min-width: 320px;
+    overflow-x: hidden;
+    touch-action: manipulation;
+  }
+
+  #root {
+    width: 100%;
+    min-height: 100dvh;
+    overflow-x: hidden;
+  }
+
+  * {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* iOS safe area support */
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  .pt-safe {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+
+  /* Hide scrollbars but keep scroll */
+  ::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@layer components {
+  .page-container {
+    @apply px-4 py-5 max-w-lg mx-auto;
+  }
+
+  .page-title {
+    @apply text-xl font-mono font-bold text-cyber-text tracking-tight;
+  }
+
+  .section-title {
+    @apply text-xs font-mono text-cyber-dim uppercase tracking-widest mb-3;
+  }
+
+  .card {
+    @apply bg-cyber-card border border-cyber-border rounded-xl p-4 transition-colors;
+  }
+
+  .card:hover {
+    @apply border-cyber-muted;
+  }
+
+  .btn-primary {
+    @apply px-4 py-2 rounded-lg bg-cyber-green/10 border border-cyber-green/40 text-cyber-green font-mono font-semibold text-sm hover:bg-cyber-green/20 transition-colors;
+  }
+
+  .btn-secondary {
+    @apply px-4 py-2 rounded-lg border border-cyber-border text-cyber-dim font-mono text-sm hover:text-cyber-text hover:border-cyber-muted transition-colors;
+  }
+
+  .input-field {
+    @apply w-full px-3 py-2.5 bg-cyber-dark border border-cyber-border rounded-lg text-cyber-text font-mono text-sm focus:outline-none focus:border-cyber-cyan/60 placeholder-cyber-muted transition-colors;
+  }
+
+  .form-label {
+    @apply block text-xs font-mono text-cyber-dim uppercase tracking-widest mb-1.5;
+  }
+}
+
+@layer utilities {
+  /* Neon glow for active states */
+  .text-glow-green {
+    text-shadow: 0 0 8px rgba(0, 255, 135, 0.5);
+  }
+
+  .text-glow-cyan {
+    text-shadow: 0 0 8px rgba(0, 229, 255, 0.5);
+  }
+
+  /* Panel border gradient effect */
+  .border-glow {
+    box-shadow: inset 0 0 0 1px rgba(0, 255, 135, 0.15);
+  }
+}
